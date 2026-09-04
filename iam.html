@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS vs. Google Cloud: Complete IAM Architecture & Services Deep Dive</title>
+<style>
+  :root {
+    --primary: #0f172a;
+    --accent-aws: #ff9900;
+    --accent-aws-dark: #cc7a00;
+    --accent-gcp: #4285f4;
+    --accent-gcp-dark: #1a73e8;
+    --text-main: #1e293b;
+    --text-muted: #475569;
+    --bg-page: #f8fafc;
+    --bg-card: #ffffff;
+    --border-color: #e2e8f0;
+    --code-bg: #0f172a;
+    --code-text: #38bdf8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.65;
+    color: var(--text-main);
+    background-color: var(--bg-page);
+  }
+  .container {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 30px 20px;
+  }
+  header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #172554 100%);
+    color: #ffffff;
+    padding: 60px 40px;
+    border-bottom: 5px solid var(--accent-aws);
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);
+  }
+  header h1 {
+    font-size: 2.6rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 12px;
+  }
+  header p.subtitle {
+    font-size: 1.2rem;
+    color: #cbd5e1;
+    max-width: 960px;
+    line-height: 1.5;
+  }
+  .header-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.12);
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #93c5fd;
+    margin-top: 18px;
+  }
+  nav.toc {
+    background: var(--bg-card);
+    margin: 30px 0;
+    padding: 26px 32px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+    border-left: 6px solid #4338ca;
+  }
+  nav.toc h2 {
+    font-size: 1.25rem;
+    color: #1e1b4b;
+    margin-bottom: 16px;
+  }
+  nav.toc ul {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+  }
+  nav.toc a {
+    color: #334155;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+  }
+  nav.toc a:hover {
+    color: var(--accent-gcp);
+    text-decoration: underline;
+  }
+  .section-card {
+    background: var(--bg-card);
+    border-radius: 14px;
+    padding: 40px;
+    margin-bottom: 40px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.04);
+  }
+  h2.section-title {
+    font-size: 1.9rem;
+    color: #0f172a;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 14px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  h3 {
+    font-size: 1.35rem;
+    color: #0f172a;
+    margin: 28px 0 14px 0;
+  }
+  p, li {
+    font-size: 1rem;
+    color: #334155;
+    margin-bottom: 12px;
+  }
+  ul, ol {
+    margin-left: 24px;
+    margin-bottom: 18px;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 26px;
+    margin: 22px 0;
+  }
+  @media (max-width: 960px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+  .cloud-box {
+    padding: 26px;
+    border-radius: 10px;
+    border-top: 5px solid;
+    background: #ffffff;
+    border-left: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .cloud-box.aws {
+    border-top-color: var(--accent-aws);
+    background: #fffdf9;
+  }
+  .cloud-box.gcp {
+    border-top-color: var(--accent-gcp);
+    background: #f8fbff;
+  }
+  .badge {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    padding: 4px 9px;
+    border-radius: 6px;
+    font-weight: 700;
+  }
+  .badge-aws { background: #fef3c7; color: #b45309; }
+  .badge-gcp { background: #dbeafe; color: #1d4ed8; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 24px 0;
+    font-size: 0.95rem;
+    background: white;
+  }
+  th, td {
+    border: 1px solid #e2e8f0;
+    padding: 14px 18px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background-color: #f1f5f9;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  tr:nth-child(even) td {
+    background-color: #f8fafc;
+  }
+  pre {
+    background-color: var(--code-bg);
+    color: #f8fafc;
+    padding: 18px 22px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin: 16px 0 24px 0;
+  }
+  code {
+    background-color: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: ui-monospace, Menlo, Monaco, monospace;
+    font-size: 0.9em;
+    color: #be123c;
+  }
+  pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+  }
+  .callout {
+    padding: 20px 24px;
+    border-left: 5px solid #0284c7;
+    background-color: #f0f9ff;
+    border-radius: 0 8px 8px 0;
+    margin: 22px 0;
+  }
+  .callout-title {
+    font-weight: 700;
+    color: #0369a1;
+    margin-bottom: 6px;
+  }
+  .arch-diagram {
+    background: #090d16;
+    color: #38bdf8;
+    padding: 26px;
+    border-radius: 10px;
+    font-family: ui-monospace, monospace;
+    font-size: 0.85rem;
+    white-space: pre;
+    overflow-x: auto;
+    line-height: 1.35;
+    margin: 20px 0;
+  }
+  footer {
+    text-align: center;
+    padding: 45px 20px;
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container" style="padding:0;">
+    <h1>AWS vs. Google Cloud: Complete IAM Architecture Reference</h1>
+    <p class="subtitle">An exhaustive engineering manual of Identity & Access Management services, policy evaluation engines, workload federation protocols, automated reasoning, and zero-trust perimeters.</p>
+    <div class="header-badge">Target Level: Principal Cloud Security Architect & Staff IAM Engineer</div>
+  </div>
+</header>
+
+<div class="container">
+  <nav class="toc">
+    <h2>Architectural Navigation</h2>
+    <ul>
+      <li><a href="#tenancy">1. Resource Hierarchy & Tenancy Models</a></li>
+      <li><a href="#principals">2. Identity Constructs & Principal Specifications</a></li>
+      <li><a href="#engines">3. Policy Grammars & Authorization Engines</a></li>
+      <li><a href="#sts">4. Token Mechanics & Ephemeral Credentials</a></li>
+      <li><a href="#workload-fed">5. Workload Identity Federation (Keyless Auth)</a></li>
+      <li><a href="#workforce-fed">6. Workforce Identity Federation & Enterprise SSO</a></li>
+      <li><a href="#governance">7. Automated Reasoning, Access Analysis & Governance</a></li>
+      <li><a href="#perimeters">8. Zero-Trust Perimeters & Context-Aware Access</a></li>
+      <li><a href="#matrix">9. Comprehensive IAM Capability Matrix</a></li>
+      <li><a href="#scenarios">10. Principal-Level Whiteboard Scenarios</a></li>
+    </ul>
+  </nav>
+
+  <!-- SECTION 1 -->
+  <section id="tenancy" class="section-card">
+    <h2 class="section-title">1. Resource Hierarchy & Tenancy Models</h2>
+    <p>The tenancy model defines how authorization policies propagate across accounts, folders, and resources, dictating isolation blast radius and governance delegation.</p>
+
+    <div class="arch-diagram">
+==================================================================================================
+                            RESOURCE HIERARCHY COMPARISON
+==================================================================================================
+AWS ORGANIZATIONS                                    GOOGLE CLOUD RESOURCE MANAGER
+[ Organizations Root ]                               [ Organization (Cloud Identity Domain) ]
+          │                                                         │
+   ┌──────┴──────┐                                           ┌──────┴──────┐
+[ Core OU ]  [ Workload OU ]                             [ Folder: Core ] [ Folder: Workloads ]
+     │             │                                             │               │
+ [ Account ]   [ Account ]                                 [ Project ]     [ Sub-Folder ]
+     │             │                                             │               │
+ (IAM Engine)  (IAM Engine)                              (Cloud Storage,    [ Project: Prod ]
+ (VPC, S3,     (EC2, KMS,                                 BigQuery, GCE)         │
+  Local Roles)  Local Roles)                                               (Cloud Storage, GKE)
+==================================================================================================</div>
+
+    <div class="grid-2">
+      <div class="cloud-box aws">
+        <h3>AWS Multi-Account Tenancy <span class="badge badge-aws">AWS</span></h3>
+        <p>AWS enforces a <strong>hard boundary at the Account level</strong>. Each AWS account maintains a segregated IAM database and local policy evaluation runtime.</p>
+        <ul>
+          <li><strong>AWS Organizations:</strong> Management container orchestrating nested Organizational Units (OUs, max depth of 5).</li>
+          <li><strong>Service Control Policies (SCPs):</strong> Organization-level guardrails. <em>Crucial rule:</em> SCPs never grant access; they define an authorization filter (allowlist or denylist) that caps the maximum available permissions for member accounts.</li>
+          <li><strong>Resource Control Policies (RCPs):</strong> Centrally applied guardrails that constrain incoming access to AWS resources across accounts, preventing public data exfiltration.</li>
+          <li><strong>Cross-Account Isolation:</strong> Explicit authorization is mandatory on both sides. Account A must grant permission to assume a role or access a resource, and Account B's identity must explicitly be granted permission to invoke the cross-account action.</li>
+        </ul>
+      </div>
+
+      <div class="cloud-box gcp">
+        <h3>Google Cloud Lattice Inheritance <span class="badge badge-gcp">GCP</span></h3>
+        <p>Google Cloud operates a <strong>single unified global resource tree</strong> rooted at the Organization node (tightly anchored to a Cloud Identity / Google Workspace domain).</p>
+        <ul>
+          <li><strong>Folders & Projects:</strong> Folders can be nested up to 10 levels deep. Projects act as API enablement, quota, and billing containers—not isolated identity boundaries.</li>
+          <li><strong>Lattice Inheritance Model:</strong> IAM bindings applied at higher levels (Org or Folder) propagate downward to all descendent resources additively:
+            <br><code>Effective Permissions = Union(Org, Folder_1, ..., Folder_n, Project, Resource)</code>
+          </li>
+          <li><strong>Non-Revocable Allow:</strong> A permission granted at an Organization or Folder node <em>cannot</em> be revoked at a child Project level using Allow policies.</li>
+          <li><strong>Hierarchical Deny Policies:</strong> Explicit Deny rules placed at Org or Folder levels that override downstream Allow bindings, evaluated prior to standard IAM checks.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2 -->
+  <section id="principals" class="section-card">
+    <h2 class="section-title">2. Identity Constructs & Principal Specifications</h2>
+    <p>Understanding the distinction between human operators, system agents, and machine identities across both platforms.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Principal Type</th>
+          <th>Amazon Web Services (AWS)</th>
+          <th>Google Cloud Platform (GCP)</th>
+          <th>Key Architectural Difference</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Superuser</strong></td>
+          <td><strong>Root User:</strong> Account-level email/password + hardware MFA. Cannot be restricted by IAM policies within its account.</td>
+          <td><strong>Cloud Identity Super Admin:</strong> Manages domain settings. Has no automatic access to resource data unless assigned explicit IAM roles.</td>
+          <td>AWS Root has inherent, unconditional bypass within its account. GCP Super Admin must explicitly bind permissions to its own identity.</td>
+        </tr>
+        <tr>
+          <td><strong>Human User</strong></td>
+          <td><code>IAM User</code> (legacy static keys/passwords) or <code>IAM Identity Center User</code> (SSO).</td>
+          <td><code>user:alice@company.com</code> (Cloud Identity, Google Workspace, or federated external SAML/OIDC identity).</td>
+          <td>GCP treats the user email as a first-class global identity. AWS legacy IAM users are scoped strictly to a single AWS account.</td>
+        </tr>
+        <tr>
+          <td><strong>Group Entity</strong></td>
+          <td><code>IAM Group</code> (Collection of IAM users). <em>Cannot</em> be referenced as a <code>Principal</code> in resource policies.</td>
+          <td><code>group:devs@company.com</code> or Dynamic Groups. <em>Can</em> be directly targeted in IAM policy bindings everywhere.</td>
+          <td>GCP groups can be used in IAM bindings across any resource level. AWS IAM Groups cannot be used in trust or resource-based policies.</td>
+        </tr>
+        <tr>
+          <td><strong>Machine Identity</strong></td>
+          <td><code>IAM Role</code> (No long-term credentials; assumed via STS for temporary sessions).</td>
+          <td><code>Service Account</code> (Email-based machine identity; can be both an Actor/Identity and a Target Resource).</td>
+          <td>GCP Service Accounts have a dual nature: users can hold permissions <em>on</em> the SA to impersonate it, while the SA holds roles on cloud resources.</td>
+        </tr>
+        <tr>
+          <td><strong>System / Managed Agent</strong></td>
+          <td><code>Service-Linked Role (SLR)</code>: Predefined role created automatically by AWS services to manage customer resources.</td>
+          <td><code>Service Agent</code>: Google-managed service account (e.g., <code>service-{project_number}@compute-system.iam.gserviceaccount.com</code>).</td>
+          <td>Both represent platform automation acting inside customer environments with least-privilege scoping.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <div class="callout-title">The Dual Nature of GCP Service Accounts</div>
+      <p>In GCP, an identity requires the <code>roles/iam.serviceAccountUser</code> or <code>roles/iam.serviceAccountTokenCreator</code> role granted on a Service Account resource to impersonate it. Once impersonated, the actor assumes the outbound permissions assigned to that Service Account on target projects and resources.</p>
+    </div>
+  </section>
+
+  <!-- SECTION 3 -->
+  <section id="engines" class="section-card">
+    <h2 class="section-title">3. Policy Grammars & Authorization Engines</h2>
+    <p>A deep architectural look at how policy documents are structured and evaluated at runtime.</p>
+
+    <div class="grid-2">
+      <div class="cloud-box aws">
+        <h3>AWS Policy Types & Evaluation Pipeline <span class="badge badge-aws">AWS</span></h3>
+        <p>AWS parses six discrete policy tiers during every API invocation:</p>
+        <ol>
+          <li><strong>Explicit Deny Check:</strong> Scans all attached policies. Any explicit Deny results in immediate request termination.</li>
+          <li><strong>Service Control Policies (SCPs):</strong> Must evaluate to Allow; otherwise, authorization fails.</li>
+          <li><strong>Resource-Based Policies:</strong> S3, KMS, SQS policies. In cross-account calls, a valid resource policy can establish trust.</li>
+          <li><strong>Identity-Based Policies:</strong> Attached to User or Role. In single-account calls, an Allow from either identity or resource policy satisfies access.</li>
+          <li><strong>Permissions Boundaries:</strong> Managed policy setting the ceiling for maximum granted permissions.</li>
+          <li><strong>Session Policies:</strong> Passed dynamically via STS during role assumption to restrict the active session.</li>
+        </ol>
+      </div>
+
+      <div class="cloud-box gcp">
+        <h3>GCP IAM Binding Model & CEL Expressions <span class="badge badge-gcp">GCP</span></h3>
+        <p>GCP evaluates access using declarative bindings and Common Expression Language (CEL):</p>
+        <ol>
+          <li><strong>Hierarchical Deny Evaluation:</strong> Evaluates Deny policies attached to Org, Folder, or Project. Any matching deny immediately rejects the request.</li>
+          <li><strong>Hierarchy Traversal (Upward Walk):</strong> Checks bindings on the resource itself, then its parent Project, parent Folders, and the Organization node.</li>
+          <li><strong>CEL Condition Evaluation:</strong> Evaluates boolean expressions against attributes such as <code>request.time</code>, <code>resource.matchTag()</code>, or <code>request.auth.claims</code>.</li>
+          <li><strong>Default Implicit Deny:</strong> If no matching Allow binding is found across the tree, access is denied.</li>
+        </ol>
+      </div>
+    </div>
+
+    <h3>Policy Document Schemas Side-by-Side</h3>
+    <div class="grid-2">
+      <div>
+        <h4>AWS IAM Policy (JSON)</h4>
+        <pre><code>{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowProductionKMSAccess",
+      "Effect": "Allow",
+      "Action": [
+        "kms:Decrypt",
+        "kms:GenerateDataKey*"
+      ],
+      "Resource": "arn:aws:kms:us-east-1:111122223333:key/mrk-1234abcd",
+      "Condition": {
+        "StringEquals": {
+          "aws:PrincipalTag/Department": "SecurityOperations"
+        },
+        "Bool": {
+          "aws:SecureTransport": "true"
+        }
+      }
+    }
+  ]
+}</code></pre>
+      </div>
+      <div>
+        <h4>GCP IAM Policy Binding with CEL (JSON)</h4>
+        <pre><code>{
+  "bindings": [
+    {
+      "role": "roles/cloudkms.cryptoKeyDecrypter",
+      "members": [
+        "group:secops@example.com"
+      ],
+      "condition": {
+        "title": "EnforceSecOpsTagAndTiming",
+        "description": "Restrict access to tagged keys during business hours",
+        "expression": "resource.matchTag('123456789/dept', 'SecOps') && request.time.getHours('America/New_York') >= 8 && request.time.getHours('America/New_York') <= 18"
+      }
+    }
+  ],
+  "version": 3
+}</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 4 -->
+  <section id="sts" class="section-card">
+    <h2 class="section-title">4. Token Mechanics & Ephemeral Credentials</h2>
+    <p>Production security mandates eliminating static credentials in favor of short-lived cryptographic tokens.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Attribute</th>
+          <th>AWS Security Token Service (STS)</th>
+          <th>Google Cloud IAM Credentials API</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Primary APIs</strong></td>
+          <td><code>AssumeRole</code>, <code>AssumeRoleWithWebIdentity</code>, <code>AssumeRoleWithSAML</code>, <code>GetFederationToken</code></td>
+          <td><code>generateAccessToken</code>, <code>generateIdToken</code>, <code>signBlob</code>, <code>signJwt</code></td>
+        </tr>
+        <tr>
+          <td><strong>Credential Payload</strong></td>
+          <td>Triad: <code>AccessKeyId</code> (starts with <code>ASIA...</code>), <code>SecretAccessKey</code>, <code>SessionToken</code></td>
+          <td>OAuth 2.0 Bearer Access Token (opaque or JWT) or OpenID Connect (OIDC) ID Token</td>
+        </tr>
+        <tr>
+          <td><strong>Session Duration</strong></td>
+          <td>Configurable: 15 minutes to 12 hours (Role setting); chained assumption limited to 1 hour</td>
+          <td>Default: 1 hour (Extendable to 12 hours via Org Policy constraint: <code>constraints/iam.allowServiceAccountCredentialLifetimeExtension</code>)</td>
+        </tr>
+        <tr>
+          <td><strong>Request Signing Protocol</strong></td>
+          <td><strong>AWS SigV4 / SigV4A:</strong> HMAC-SHA256 hash computed over canonicalized request string and headers locally on the client.</td>
+          <td><strong>Bearer Authorization:</strong> HTTP header <code>Authorization: Bearer ya29...</code> validated against Google Front Ends.</td>
+        </tr>
+        <tr>
+          <td><strong>Revocation Capabilities</strong></td>
+          <td>Revoke active sessions by attaching an inline policy with <code>aws:TokenIssueTime</code> condition to the role.</td>
+          <td>Service account keys can be disabled/deleted immediately; active OAuth access tokens expire naturally within their 1-hour window.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- SECTION 5 -->
+  <section id="workload-fed" class="section-card">
+    <h2 class="section-title">5. Workload Identity Federation (Keyless Machine Auth)</h2>
+    <p>Cross-cloud and CI/CD pipelines (GitHub Actions, GitLab, Kubernetes, on-premises machines) can authenticate securely without long-lived service account keys or IAM user credentials.</p>
+
+    <div class="arch-diagram">
+==================================================================================================
+                 OIDC WORKLOAD IDENTITY FEDERATION FLOW (GITHUB ACTIONS / K8S)
+==================================================================================================
+[ External Workload ] ──────── 1. Fetch Signed OIDC Token (JWT) ──────► [ External Identity Provider ]
+ (GitHub / On-Prem / K8s)                                                  (Token Issuer / JWKS)
+         │
+         │ 2. Send OIDC Token (Subject, Audience, Claims)
+         ▼
+[ Cloud STS Endpoint ] ◄────── 3. Cryptographically Verify Signature ────┘
+  (AWS STS / GCP STS)             against External Provider JWKS URL
+         │
+         │ 4. Issue Ephemeral Cloud Credentials
+         ▼
+[ Workload Authenticated ]
+  - AWS: ASIA... Credentials (AWS SigV4)
+  - GCP: Short-Lived OAuth 2.0 Access Token
+==================================================================================================</div>
+
+    <div class="grid-2">
+      <div class="cloud-box aws">
+        <h3>AWS Machine Identity Patterns <span class="badge badge-aws">AWS</span></h3>
+        <ul>
+          <li><strong>EKS IAM Roles for Service Accounts (IRSA):</strong> An OIDC Discovery endpoint is created for the Kubernetes cluster. Pods inject short-lived projected tokens to call <code>sts:AssumeRoleWithWebIdentity</code>.</li>
+          <li><strong>EKS Pod Identity:</strong> Modern alternative to IRSA. An in-cluster daemon agent intercepts credential calls, eliminating the need to manage individual OIDC provider URLs in IAM trust policies.</li>
+          <li><strong>AWS IAM Roles Anywhere:</strong> Leverages X.509 PKI certificates issued by an on-premises Certificate Authority (CA) to authenticate servers, physical machines, and hybrid workloads against AWS STS.</li>
+        </ul>
+      </div>
+
+      <div class="cloud-box gcp">
+        <h3>GCP Workload Identity Federation <span class="badge badge-gcp">GCP</span></h3>
+        <ul>
+          <li><strong>Workload Identity Pools:</strong> Logical containers managing external trust domains (AWS, Azure, GitHub Actions, Okta).</li>
+          <li><strong>Attribute Mappings & Conditions:</strong> Maps incoming claims to Google attributes (e.g., <code>google.subject=assertion.sub</code>) and validates conditions using CEL expressions (e.g., <code>assertion.repository == "enterprise/core-repo"</code>).</li>
+          <li><strong>GKE Workload Identity:</strong> Replaces metadata server endpoints on GKE nodes with a secure metadata proxy. Automatically maps Kubernetes Service Accounts (KSA) to Google Service Accounts (GSA).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 6 -->
+  <section id="workforce-fed" class="section-card">
+    <h2 class="section-title">6. Workforce Identity Federation & Enterprise SSO</h2>
+    <p>How enterprise employees (humans) authenticate into cloud consoles, CLI sessions, and internal tools using corporate identity providers (Okta, Ping, Microsoft Entra ID).</p>
+
+    <div class="grid-2">
+      <div class="cloud-box aws">
+        <h3>AWS IAM Identity Center (formerly AWS SSO) <span class="badge badge-aws">AWS</span></h3>
+        <ul>
+          <li><strong>Directory Synchronization:</strong> Native integration with enterprise IdPs using <strong>SAML 2.0 for authentication</strong> and <strong>SCIM (System for Cross-domain Identity Management) for automatic user/group provisioning</strong>.</li>
+          <li><strong>Permission Sets:</strong> Centrally defined policy bundles assigned across AWS Organization accounts. When assigned, IAM Identity Center automatically deploys corresponding IAM roles into target accounts.</li>
+          <li><strong>Session Management:</strong> Configurable console and CLI session durations with multi-factor authentication (MFA) enforcement at sign-in.</li>
+          <li><strong>Application Assignments:</strong> Built-in support for assigning workforce access to AWS-managed applications (Amazon Q, QuickSight) and third-party SAML SaaS tools.</li>
+        </ul>
+      </div>
+
+      <div class="cloud-box gcp">
+        <h3>GCP Workforce Identity Federation & Cloud Identity <span class="badge badge-gcp">GCP</span></h3>
+        <ul>
+          <li><strong>Cloud Identity Engine:</strong> Google's built-in Identity-as-a-Service (IDaaS) platform. Syncs users and groups from on-premises directories via Google Cloud Directory Sync (GCDS) or federates via SAML 2.0 / OIDC.</li>
+          <li><strong>Workforce Identity Federation:</strong> Enables workforce users (via Okta, Entra ID) to access Google Cloud console and gcloud CLI <strong>without creating synced user accounts in Cloud Identity</strong>.</li>
+          <li><strong>Attribute-Based Access Control:</strong> Pass corporate attributes (department, cost-center) in the IdP assertion to dynamically determine resource access via CEL conditions.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 7 -->
+  <section id="governance" class="section-card">
+    <h2 class="section-title">7. Automated Reasoning, Access Analysis & Governance</h2>
+    <p>Proactive verification of least privilege, unintended public exposure detection, and policy drift analysis.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Capability</th>
+          <th>AWS Identity Ecosystem</th>
+          <th>Google Cloud IAM Ecosystem</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Formal Verification Engine</strong></td>
+          <td><strong>IAM Access Analyzer:</strong> Powered by <strong>Automated Reasoning (SMT Solvers)</strong>. Translates JSON policies into mathematical logic to mathematically prove whether a resource can be accessed externally before traffic ever arrives.</td>
+          <td><strong>Policy Analyzer & Policy Simulator:</strong> Deterministic graph-traversal engine. Evaluates current policy bindings against Cloud Asset Inventory to simulate changes and verify effective access.</td>
+        </tr>
+        <tr>
+          <td><strong>Least Privilege Mining</strong></td>
+          <td><strong>Access Analyzer Policy Generation:</strong> Mines AWS CloudTrail management and data events over a specified date range to generate a tight, custom IAM policy containing only used actions.</td>
+          <td><strong>IAM Recommender:</strong> Machine-learning-based intelligence engine analyzing 90-day activity logs. Flags over-privileged bindings and provides safe one-click role replacement.</td>
+        </tr>
+        <tr>
+          <td><strong>CI/CD Policy Linting</strong></td>
+          <td>IAM Access Analyzer custom policy checks integrated into CI/CD pipelines (GitHub Actions, CodePipeline) to block non-compliant policy deployments.</td>
+          <td>Policy Validator and gcloud CLI dry-run capabilities validating IAM bindings against organization security guardrails during GitOps deployment.</td>
+        </tr>
+        <tr>
+          <td><strong>Auditing & Logging</strong></td>
+          <td><strong>AWS CloudTrail:</strong> Records all API calls, role assumptions, STS token issuances, and management operations across all regions.</td>
+          <td><strong>Cloud Audit Logs:</strong> Admin Activity logs (free, non-configurable, immutable) and Data Access logs (BigQuery, Storage read/write tracking).</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- SECTION 8 -->
+  <section id="perimeters" class="section-card">
+    <h2 class="section-title">8. Zero-Trust Perimeters & Context-Aware Access</h2>
+    <p>Pure identity credentials can be stolen or compromised. Securing enterprise environments requires binding authorization decisions to network location, device health, and cryptographic boundaries.</p>
+
+    <div class="grid-2">
+      <div class="cloud-box aws">
+        <h3>AWS VPC Endpoints & Condition Keys <span class="badge badge-aws">AWS</span></h3>
+        <p>AWS enforces perimeter control through combined IAM condition keys and network endpoint policies:</p>
+        <ul>
+          <li><strong><code>aws:sourceVpc</code> / <code>aws:sourceVpce</code>:</strong> IAM condition keys that restrict API execution strictly to calls originating from within designated VPCs or specific VPC Endpoint IDs.</li>
+          <li><strong><code>aws:PrincipalOrgID</code>:</strong> Restricts resource access exclusively to principals belonging to a specific AWS Organization ID, preventing external cross-account access.</li>
+          <li><strong>VPC Endpoint Policies:</strong> Resource policies attached to AWS PrivateLink endpoints that restrict which S3 buckets or KMS keys can be reached through the interface, blocking unauthorized exfiltration.</li>
+        </ul>
+      </div>
+
+      <div class="cloud-box gcp">
+        <h3>GCP VPC Service Controls (VPC-SC) <span class="badge badge-gcp">GCP</span></h3>
+        <p>GCP decouples identity authorization from network perimeter boundaries via VPC Service Controls:</p>
+        <ul>
+          <li><strong>Service Perimeters:</strong> Cryptographic boundaries placed around Google-managed PaaS APIs (Cloud Storage, BigQuery, Cloud SQL).</li>
+          <li><strong>Data Exfiltration Prevention:</strong> Even if a bad actor steals valid project owner credentials, API requests originating outside the perimeter (or targeting storage buckets outside the boundary) are blocked at the Google API proxy layer with HTTP 403.</li>
+          <li><strong>Access Context Manager:</strong> Context-aware rules evaluating client IP subnet, geographic region, device posture (Chrome Enterprise), and user identity before allowing perimeter traversal.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 9 -->
+  <section id="matrix" class="section-card">
+    <h2 class="section-title">9. Comprehensive IAM Capability Matrix</h2>
+    <p>Direct architectural comparison across core identity and access management functions.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Functional Category</th>
+          <th>Amazon Web Services (AWS)</th>
+          <th>Google Cloud Platform (GCP)</th>
+          <th>Architectural Assessment</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Attribute-Based Access Control (ABAC)</strong></td>
+          <td>Native support using resource tags, principal tags, and session tags (<code>aws:PrincipalTag</code>, <code>aws:ResourceTag</code>).</td>
+          <td>Supported using Resource Manager Tags evaluated inside CEL conditions (<code>resource.matchTag()</code>).</td>
+          <td>AWS ABAC is more universally supported across services; GCP CEL provides richer programmatic logic.</td>
+        </tr>
+        <tr>
+          <td><strong>Cross-Account / Cross-Project Trust</strong></td>
+          <td>Requires bidirectional configuration (IAM Role Trust Policy + Identity-based AssumeRole permission).</td>
+          <td>Unidirectional binding directly grants external identities or service accounts access to target resources.</td>
+          <td>GCP delegation is simpler to administer; AWS bidirectional model enforces stricter bilateral accountability.</td>
+        </tr>
+        <tr>
+          <td><strong>Delegated Administration</strong></td>
+          <td>Permissions Boundaries prevent privilege escalation by limiting what delegated admins can assign.</td>
+          <td>Custom Roles + Hierarchical IAM bindings scoped strictly to specific Folders or Projects.</td>
+          <td>AWS Permissions Boundaries are purpose-built for secure developer self-service role creation.</td>
+        </tr>
+        <tr>
+          <td><strong>Deny Policy Mechanics</strong></td>
+          <td>Explicit Deny inside any identity, resource, or session policy takes precedence over all Allow rules.</td>
+          <td>IAM Deny Policies placed at Org/Folder level override any Allow bindings across the tree.</td>
+          <td>Both provide robust guardrails; GCP separates Deny policies into distinct policy objects for clean management.</td>
+        </tr>
+        <tr>
+          <td><strong>Machine Key Management</strong></td>
+          <td>Static IAM user access keys (discouraged; require manual rotation or Secrets Manager automation).</td>
+          <td>Service account private keys (JSON). Can be completely disabled enterprise-wide via Organization Policy.</td>
+          <td>GCP allows centralized enforcement to eradicate static machine keys entirely via Org Policy.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- SECTION 10 -->
+  <section id="scenarios" class="section-card">
+    <h2 class="section-title">10. Principal-Level Whiteboard Scenarios</h2>
+
+    <h3>Scenario A: Hardening Against SSRF Instance Metadata Exfiltration</h3>
+    <p><strong>Threat:</strong> A compromised web application allows an attacker to issue requests to the link-local metadata address (<code>169.254.169.254</code>) to exfiltrate temporary credentials.</p>
+    <ul>
+      <li><strong>AWS Hardening Protocol:</strong>
+        <ol>
+          <li>Enforce <strong>IMDSv2 globally</strong> using an SCP requiring <code>ec2:MetadataHttpTokens = required</code>.</li>
+          <li>Configure <code>ec2:MetadataHttpPutResponseHopLimit = 1</code>. This ensures the required <code>PUT</code> session token cannot traverse beyond the host instance to container runtimes or reverse proxies.</li>
+          <li>Attach IAM Permission Boundaries restricting role credentials to the specific VPC CIDR using the <code>aws:sourceVpc</code> condition.</li>
+        </ol>
+      </li>
+      <li><strong>Google Cloud Hardening Protocol:</strong>
+        <ol>
+          <li>Deploy workloads on <strong>GKE with Workload Identity</strong> enabled. This replaces the default link-local metadata server with a secure pod-level proxy that isolates credentials.</li>
+          <li>Enforce Organization Policy: <code>constraints/compute.disableGuestAttributes</code> and disable legacy metadata endpoints.</li>
+          <li>Enforce Organization Policy: <code>constraints/iam.disableServiceAccountKeyCreation</code> to ensure zero static keys exist on VMs.</li>
+        </ol>
+      </li>
+    </ul>
+
+    <h3>Scenario B: Multi-Tenant Zero-Trust Analytical Pipeline</h3>
+    <p><strong>Requirement:</strong> Allow an external analytics team in a partner account/project to process data in an internal object storage bucket without exposing encryption keys or enabling data exfiltration.</p>
+    <ul>
+      <li><strong>AWS Whiteboard Implementation:</strong>
+        <ol>
+          <li>Configure S3 Bucket Policy to allow <code>s3:GetObject</code> and <code>s3:ListBucket</code> exclusively to the Partner Role ARN.</li>
+          <li>Encrypt data using an AWS KMS Customer Managed Key (CMK). Explicitly add the Partner Account ID to the KMS Key Policy with permissions for <code>kms:Decrypt</code> (S3 access alone fails without explicit cross-account KMS delegation).</li>
+          <li>Attach a condition requiring <code>aws:SecureTransport: true</code> and enforce VPC Endpoint access via <code>aws:sourceVpce</code>.</li>
+        </ol>
+      </li>
+      <li><strong>Google Cloud Whiteboard Implementation:</strong>
+        <ol>
+          <li>Grant <code>roles/storage.objectViewer</code> on the specific Cloud Storage bucket directly to the partner identity (e.g., <code>serviceAccount:etl-worker@partner-project.iam.gserviceaccount.com</code>).</li>
+          <li>When using Customer-Managed Encryption Keys (CMEK), grant <code>roles/cloudkms.cryptoKeyDecrypter</code> to the <strong>internal Cloud Storage Service Agent</strong>, not the partner identity. GCP transparently handles the KMS decryption on behalf of authorized bucket readers.</li>
+          <li>Enforce a <strong>VPC Service Controls (VPC-SC)</strong> perimeter around the storage bucket with an Ingress Rule that permits API calls only from the partner's verified project network perimeter.</li>
+        </ol>
+      </li>
+    </ul>
+  </section>
+</div>
+
+<footer>
+  <p>AWS vs. Google Cloud IAM Architecture & Engineering Reference • Generated for Enterprise Cloud Security Architects</p>
+</footer>
+
+</body>
+</html>
