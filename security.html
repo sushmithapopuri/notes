@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AWS vs. Google Cloud: Security Services Architecture & Engineering Reference</title>
+<style>
+  :root {
+    --primary: #0f172a;
+    --accent-aws: #ff9900;
+    --accent-gcp: #4285f4;
+    --text-main: #1e293b;
+    --text-muted: #475569;
+    --bg-page: #f8fafc;
+    --bg-card: #ffffff;
+    --border-color: #e2e8f0;
+    --code-bg: #090d16;
+    --code-text: #38bdf8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.65;
+    color: var(--text-main);
+    background-color: var(--bg-page);
+  }
+  .container {
+    max-width: 1360px;
+    margin: 0 auto;
+    padding: 30px 20px;
+  }
+  header {
+    background: linear-gradient(135deg, #090d16 0%, #1e1b4b 55%, #0f172a 100%);
+    color: #ffffff;
+    padding: 65px 40px;
+    border-bottom: 5px solid var(--accent-aws);
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.25);
+  }
+  header h1 {
+    font-size: 2.7rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 12px;
+  }
+  header p.subtitle {
+    font-size: 1.25rem;
+    color: #cbd5e1;
+    max-width: 1050px;
+    line-height: 1.5;
+  }
+  .header-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.12);
+    padding: 6px 16px;
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #93c5fd;
+    margin-top: 18px;
+  }
+  nav.toc {
+    background: var(--bg-card);
+    margin: 30px 0;
+    padding: 28px 32px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    border-left: 6px solid #4338ca;
+  }
+  nav.toc h2 {
+    font-size: 1.25rem;
+    color: #1e1b4b;
+    margin-bottom: 16px;
+  }
+  nav.toc ul {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    gap: 12px;
+  }
+  nav.toc a {
+    color: #334155;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+  }
+  nav.toc a:hover {
+    color: var(--accent-gcp);
+    text-decoration: underline;
+  }
+  .section-card {
+    background: var(--bg-card);
+    border-radius: 14px;
+    padding: 40px;
+    margin-bottom: 40px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.04);
+  }
+  h2.section-title {
+    font-size: 1.9rem;
+    color: #0f172a;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 14px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  h3 {
+    font-size: 1.35rem;
+    color: #0f172a;
+    margin: 28px 0 14px 0;
+  }
+  h4 {
+    font-size: 1.1rem;
+    color: #334155;
+    margin: 18px 0 8px 0;
+  }
+  p, li {
+    font-size: 1rem;
+    color: #334155;
+    margin-bottom: 12px;
+  }
+  ul, ol {
+    margin-left: 24px;
+    margin-bottom: 18px;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 26px;
+    margin: 22px 0;
+  }
+  @media (max-width: 980px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+  .cloud-box {
+    padding: 26px;
+    border-radius: 10px;
+    border-top: 5px solid;
+    background: #ffffff;
+    border-left: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .cloud-box.aws {
+    border-top-color: var(--accent-aws);
+    background: #fffdf9;
+  }
+  .cloud-box.gcp {
+    border-top-color: var(--accent-gcp);
+    background: #f8fbff;
+  }
+  .badge {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    padding: 4px 9px;
+    border-radius: 6px;
+    font-weight: 700;
+  }
+  .badge-aws { background: #fef3c7; color: #b45309; }
+  .badge-gcp { background: #dbeafe; color: #1d4ed8; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 24px 0 30px 0;
+    font-size: 0.95rem;
+    background: white;
+  }
+  th, td {
+    border: 1px solid #e2e8f0;
+    padding: 14px 18px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background-color: #f1f5f9;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  tr:nth-child(even) td {
+    background-color: #f8fafc;
+  }
+  pre {
+    background-color: var(--code-bg);
+    color: #f8fafc;
+    padding: 18px 22px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin: 16px 0 24px 0;
+  }
+  code {
+    background-color: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: ui-monospace, Menlo, Monaco, monospace;
+    font-size: 0.9em;
+    color: #be123c;
+  }
+  pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+  }
+  .callout {
+    padding: 20px 24px;
+    border-left: 5px solid #0284c7;
+    background-color: #f0f9ff;
+    border-radius: 0 8px 8px 0;
+    margin: 22px 0;
+  }
+  .callout-title {
+    font-weight: 700;
+    color: #0369a1;
+    margin-bottom: 6px;
+  }
+  .arch-diagram {
+    background: #090d16;
+    color: #38bdf8;
+    padding: 26px;
+    border-radius: 10px;
+    font-family: ui-monospace, monospace;
+    font-size: 0.85rem;
+    white-space: pre;
+    overflow-x: auto;
+    line-height: 1.35;
+    margin: 20px 0;
+  }
+  footer {
+    text-align: center;
+    padding: 45px 20px;
+    color: #64748b;
+    font-size: 0.9rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container" style="padding:0;">
+    <h1>AWS vs. Google Cloud: Security Services Architecture Reference</h1>
+    <p class="subtitle">An exhaustive engineering manual analyzing cryptography & key management, data protection & DLP, threat detection, SIEM/SOAR security operations, vulnerability scanning, perimeter defense, confidential computing, and compliance automation.</p>
+    <div class="header-badge">Target Level: Principal Security Architect & Staff Cloud Security Engineer</div>
+  </div>
+</header>
+
+<div class="container">
+  <nav class="toc">
+    <h2>Architectural Navigation</h2>
+    <ul>
+      <li><a href="#taxonomy">1. Security Services Architecture & Taxonomy</a></li>
+      <li><a href="#kms-crypto">2. Cryptography, Key Management & Hardware Security (KMS, Cloud HSM, EKM)</a></li>
+      <li><a href="#secrets-certs">3. Secrets Management & Public Key Infrastructure (PKI)</a></li>
+      <li><a href="#data-protection">4. Data Loss Prevention & Sensitive Data Discovery (Macie vs. Sensitive Data Protection)</a></li>
+      <li><a href="#threat-detection">5. Continuous Threat Detection & Behavioral Profiling (GuardDuty vs. SCC Event Threat Detection)</a></li>
+      <li><a href="#siem-soar">6. Security Operations, SIEM & SOAR (Amazon Security Lake & Detective vs. Google SecOps / Chronicle)</a></li>
+      <li><a href="#cspm-cwpp">7. Posture Management & Workload Protection (Security Hub & Inspector vs. Security Command Center)</a></li>
+      <li><a href="#ddos-waf">8. Edge Protection, WAF & Anti-DDoS (Shield & AWS WAF vs. Cloud Armor)</a></li>
+      <li><a href="#confidential">9. Hardware-Enforced Isolation & Confidential Computing (AWS Nitro Enclaves vs. Confidential VMs/Space)</a></li>
+      <li><a href="#matrix">10. Master Capabilities, FIPS Compliance & Threat Coverage Matrix</a></li>
+      <li><a href="#scenarios">11. Principal-Level Threat Modeling & Whiteboard Scenarios</a></li>
+    </ul>
+  </nav>
+
+  <!-- SECTION 1 -->
+  <section id="taxonomy" class="section-card">
+    <h2 class="section-title">1. Security Services Architecture & Taxonomy</h2>
+    <p>Enterprise cloud security is categorized into distinct operational layers: cryptographic data perimeters, continuous telemetry ingestion, automated anomaly detection, vulnerability lifecycle management, and hardware isolation envelopes.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Security Domain</th>
+          <th>Domain Responsibility</th>
+          <th>Amazon Web Services (AWS)</th>
+          <th>Google Cloud Platform (GCP)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Key Management & HSM</strong></td>
+          <td>Envelope encryption, multi-region keys, FIPS 140-2/3 Level 3 hardware roots of trust, external key control.</td>
+          <td><strong>AWS Key Management Service (KMS)</strong> & <strong>AWS CloudHSM</strong></td>
+          <td><strong>Cloud Key Management Service (Cloud KMS)</strong>, <strong>Cloud HSM</strong> & <strong>Cloud EKM</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Secrets & Private PKI</strong></td>
+          <td>Lifecycle management of database credentials, API keys, automated rotation, private certificate authority.</td>
+          <td><strong>AWS Secrets Manager</strong> & <strong>AWS Private CA</strong></td>
+          <td><strong>Secret Manager</strong> & <strong>Certificate Authority Service (CAS)</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Data Discovery & DLP</strong></td>
+          <td>PII/PCI/HIPAA inspection, automated data cataloging, tokenization, pseudonymization, redaction pipelines.</td>
+          <td><strong>Amazon Macie</strong></td>
+          <td><strong>Sensitive Data Protection</strong> (formerly Cloud DLP)</td>
+        </tr>
+        <tr>
+          <td><strong>Threat Detection</strong></td>
+          <td>Agentless behavioral anomaly analysis, API abuse detection, compromised instance/container profiling.</td>
+          <td><strong>Amazon GuardDuty</strong></td>
+          <td><strong>Security Command Center (SCC) Event Threat Detection</strong> & <strong>Container Threat Detection</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Posture & Vulnerabilities</strong></td>
+          <td>CSPM compliance checks, CVE vulnerability scanning, software bill of materials (SBOM), CIS benchmarks.</td>
+          <td><strong>AWS Security Hub</strong> & <strong>Amazon Inspector</strong></td>
+          <td><strong>Security Command Center (SCC) Posture Management</strong> & <strong>Virtual Machine Threat Detection (VMTD)</strong></td>
+        </tr>
+        <tr>
+          <td><strong>SIEM / SOAR SecOps</strong></td>
+          <td>Petabyte-scale log aggregation (OCSF), retrospective IoC hunting, automated security orchestration.</td>
+          <td><strong>Amazon Security Lake</strong> & <strong>Amazon Detective</strong></td>
+          <td><strong>Google Security Operations (Google SecOps / Chronicle SIEM & SOAR)</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Edge & Application Defense</strong></td>
+          <td>Layer 3/4 multi-terabit DDoS mitigation, Layer 7 WAF, OWASP Top 10, bot management, rate limiting.</td>
+          <td><strong>AWS Shield Standard/Advanced</strong> & <strong>AWS WAF</strong></td>
+          <td><strong>Cloud Armor</strong> (Enterprise WAF + Edge DDoS)</td>
+        </tr>
+        <tr>
+          <td><strong>Confidential Computing</strong></td>
+          <td>Protection of data in-use via memory encryption, CPU hardware isolation, cryptographic attestation.</td>
+          <td><strong>AWS Nitro Enclaves</strong> & <strong>AMD SEV-SNP instances</strong></td>
+          <td><strong>Confidential VMs</strong>, <strong>Confidential Space</strong> & <strong>Confidential GKE</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- SECTION 2 -->
+  <section id="kms-crypto" class="section-card">
+    <h2 class="section-title">2. Cryptography, Key Management & Hardware Security</h2>
+    <p>Envelope encryption is the foundational pattern for both AWS and GCP. Data is encrypted locally with a Data Encryption Key (DEK), and the DEK is encrypted under a Key Encryption Key (KEK) maintained inside a Hardware Security Module (HSM).</p>
+
+    <div class="arch-diagram">
+==================================================================================================
+                 ENVELOPE ENCRYPTION ARCHITECTURE: AWS KMS VS. GCP CLOUD KMS
+==================================================================================================
+AWS KMS (CALLS VIA SIGV4 / HYPERPLANE)            GCP CLOUD KMS (DIRECT API OVER REST/GRPC)
+[ Client Application / AWS S3 ]                   [ Client Application / Cloud Storage ]
+        │                                                  │
+        │ 1. GenerateDataKey(KeyId)                        │ 1. GenerateRandomBytes / Encrypt
+        ▼                                                  ▼
+[ AWS KMS HSM Tier (FIPS 140-2 L3) ]              [ Cloud KMS HSM Tier (FIPS 140-2/3 L3) ]
+  ├─ Decrypts Customer Master Key (CMK)             ├─ Accesses CryptoKeyVersion
+  ├─ Generates 256-bit AES DEK                      ├─ Software, HSM, or EKM backend
+  └─ Returns: Plaintext DEK + Ciphertext DEK        └─ Encrypts DEK using Google AEAD
+        │                                                  │
+        │ 2. Encrypts Data with Plaintext DEK              │ 2. Encrypts Data with Plaintext DEK
+        │ 3. Erases Plaintext DEK from RAM                 │ 3. Erases Plaintext DEK from RAM
+        ▼                                                  ▼
+[ Storage: Ciphertext Data + Ciphertext DEK ]     [ Storage: Ciphertext Data + Wrapped DEK ]
+==================================================================================================</div>
+
+    <div class="grid-2">
+      <div class="cloud-box aws">
+        <h3>AWS Key Management Service (KMS) & CloudHSM <span class="badge badge-aws">AWS</span></h3>
+        <ul>
+          <li><strong>Key Architecture:</strong>
+            <ul>
+              <li><strong>AWS Owned Keys:</strong> Managed entirely by AWS; customer has no visibility or CloudTrail audit logging.</li>
+              <li><strong>AWS Managed Keys:</strong> Created automatically on behalf of a service (e.g., <code>aws/s3</code>). Rotates every year automatically. Cannot modify policy.</li>
+              <li><strong>Customer Managed Keys (CMKs):</strong> Full policy control, rotation options (annual or on-demand), and CloudTrail visibility.</li>
+              <li><strong>Multi-Region Keys (MRKs):</strong> Primary key in one region replicated to secondary regions with identical key material and Key ID. Enables decrypting cross-region ciphertexts locally without cross-region network calls.</li>
+            </ul>
+          </li>
+          <li><strong>Cryptographic Underlay:</strong> Proprietary hardware HSMs validated at FIPS 140-2 Level 3 (overall Level 2).</li>
+          <li><strong>AWS CloudHSM:</strong> Single-tenant, dedicated FIPS 140-2 Level 3 HSM appliances provisioned directly into customer VPCs. Customer manages PKCS#11, JCE, and OpenSSL cryptographic users directly. AWS has zero access to key material.</li>
+          <li><strong>Custom Key Stores:</strong> Backs AWS KMS with dedicated AWS CloudHSM clusters or an on-premises external key manager (XKS).</li>
+        </ul>
+      </div>
+
+      <div class="cloud-box gcp">
+        <h3>GCP Cloud KMS, Cloud HSM & Cloud EKM <span class="badge badge-gcp">GCP</span></h3>
+        <ul>
+          <li><strong>Key Hierarchy:</strong> <code>KeyRing</code> (regional/global container) $ightarrow$ <code>CryptoKey</code> $ightarrow$ <code>CryptoKeyVersion</code>.</li>
+          <li><strong>Protection Levels:</strong>
+            <ul>
+              <li><strong>SOFTWARE:</strong> Software-backed keys protected by Google's internal cryptographic root of trust.</li>
+              <li><strong>HSM:</strong> Backed by FIPS 140-2 Level 3 hardware security modules. Managed transparently without cluster maintenance overhead.</li>
+              <li><strong>EXTERNAL (Cloud EKM):</strong> Coordinates with external on-premises HSMs (Thales, Fortanix, Entrust). Keys never enter Google Cloud. Every cryptographic operation issues a gRPC call over a VPC or private interconnect to the customer's on-premises HSM.</li>
+              <li><strong>EKM with Key Access Justifications (KAJ):</strong> Transmits a programmatic justification with every decrypt request. The customer's external HSM automatically blocks decryption if Google's automated operational justification is unauthorized (e.g., preventing administrative subpoena access).</li>
+            </ul>
+          </li>
+          <li><strong>Autokey:</strong> Automates KMS key creation and IAM binding provisioning according to resource security guidelines during Terraform deployment.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 3 -->
+  <section id="secrets-certs">
+    <h2 class="section-title">3. Secrets Management & Public Key Infrastructure (PKI)</h2>
+    <p>Hardcoded credentials and unmanaged TLS certificates represent primary attack vectors. Modern architectures automate certificate issuance and credential rotation.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Capability</th>
+          <th>Amazon Web Services (AWS)</th>
+          <th>Google Cloud Platform (GCP)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Secrets Storage & Lifecycle</strong></td>
+          <td><strong>AWS Secrets Manager:</strong> Encrypted with KMS CMKs. Versioning uses staging labels (<code>AWSCURRENT</code>, <code>AWSPREVIOUS</code>, <code>AWSPENDING</code>). Max secret size: 64 KB.</td>
+          <td><strong>Secret Manager:</strong> Global or regional secret replication. Managed versioning (integers: <code>1</code>, <code>2</code>, <code>latest</code>). Max payload size: 64 KiB. Automatic destroyed-state delayed wiping.</td>
+        </tr>
+        <tr>
+          <td><strong>Automated Credential Rotation</strong></td>
+          <td>Native Lambda integration out-of-the-box for RDS (PostgreSQL, MySQL), DocumentDB, and Redshift. Multi-step rotation lifecycle preventing lockouts.</td>
+          <td>Event-driven via Cloud Pub/Sub and Cloud Run / Cloud Functions. Rotation triggers scheduled via Cloud Scheduler.</td>
+        </tr>
+        <tr>
+          <td><strong>Private CA Management</strong></td>
+          <td><strong>AWS Private CA:</strong> Fully managed private certificate authority. Root and subordinate CAs. Issues X.509 certificates with CRLs and OCSP validation. Audited to FIPS 140-2 Level 3 HSMs.</td>
+          <td><strong>Certificate Authority Service (CAS):</strong> Scalable managed CA. Tiered into DevOps (high-volume, short-lived container certs) and Enterprise tiers. Highly configurable certificate profiles.</td>
+        </tr>
+        <tr>
+          <td><strong>Public TLS Management</strong></td>
+          <td><strong>AWS Certificate Manager (ACM):</strong> Free public SSL/TLS certificates with automatic DNS validation and auto-renewal for ALBs, CloudFront, and API Gateways.</td>
+          <td><strong>Certificate Manager:</strong> Google-managed SSL/TLS certificates supporting single domain, multi-domain (SAN), and wildcard certificates for Cloud Load Balancing.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- SECTION 4 -->
+  <section id="data-protection">
+    <h2 class="section-title">4. Data Loss Prevention & Sensitive Data Discovery</h2>
+    <p>Automated discovery, classification, and remediation of PII, financial information (PCI), and health records (HIPAA) residing across object storage and analytical datasets.</p>
+
+    <div class="grid-2">
+      <div class="cloud-box aws">
+        <h3>Amazon Macie <span class="badge badge-aws">AWS</span></h3>
+        <ul>
+          <li><strong>Scope:</strong> Dedicated sensitive data discovery service designed specifically for <strong>Amazon S3</strong>.</li>
+          <li><strong>Operational Engine:</strong>
+            <ul>
+              <li><strong>Automated Sensitive Data Discovery:</strong> Continuously evaluates S3 buckets across an organization using intelligent sampling techniques to identify sensitive data footprints without scanning every byte.</li>
+              <li>Uses machine learning and pattern-matching classifiers to detect PII (national IDs, credit cards, credentials).</li>
+              <li>Generates deep security posture findings: flags publicly accessible buckets, unencrypted buckets, or buckets shared outside the AWS Organization.</li>
+            </ul>
+          </li>
+          <li><strong>Limitations:</strong> Limited to S3. Does not natively scan block storage, databases, or incoming API streams.</li>
+        </ul>
+      </div>
+
+      <div class="cloud-box gcp">
+        <h3>Sensitive Data Protection (Cloud DLP) <span class="badge badge-gcp">GCP</span></h3>
+        <ul>
+          <li><strong>Scope:</strong> Comprehensive discovery, classification, and real-time de-identification platform spanning <strong>Cloud Storage, BigQuery, Datastore, and custom application pipelines</strong>.</li>
+          <li><strong>Operational Engine:</strong>
+            <ul>
+              <li>Over 150 built-in <code>infoTypes</code> with custom regex, dictionary, and context-rule support.</li>
+              <li>Continuous discovery profiling across all BigQuery tables and Cloud Storage buckets at project or organizational scale.</li>
+              <li><strong>Data Transformation & Tokenization Engine:</strong> Performs format-preserving encryption (FPE), cryptographic hashing, bucketing, masking, and differential privacy transformations directly on data streams before storing.</li>
+            </ul>
+          </li>
+          <li><strong>Advantage:</strong> Can be invoked synchronously via API in streaming architectures (e.g., sanitizing logs in Cloud Run before writing to BigQuery).</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 5 -->
+  <section id="threat-detection">
+    <h2 class="section-title">5. Continuous Threat Detection & Behavioral Profiling</h2>
+    <p>Analyzing control-plane activity, data-plane events, and OS runtime behavior to identify malicious actors and zero-day compromises.</p>
+
+    <div class="arch-diagram">
+==================================================================================================
+                 BEHAVIORAL THREAT DETECTION: GUARDDUTY VS. SCC EVENT THREAT
+==================================================================================================
+AMAZON GUARDDUTY                                  GCP SECURITY COMMAND CENTER (PREMIUM/ENTERPRISE)
+[ Raw Telemetry Ingestion ]                       [ Raw Telemetry Ingestion ]
+  ├─ AWS CloudTrail Management & Data Events        ├─ Cloud Logging (Admin & Data Access Logs)
+  ├─ VPC Flow Logs (Internal Hyperplane taps)       ├─ VPC Flow Logs
+  ├─ DNS Query Logs (AmazonProvidedDNS)             ├─ Cloud DNS Logs
+  └─ EKS Audit Logs & Container Runtimes            └─ Syscall Engine / Guest OS Hypervisor Taps
+        │                                                  │
+        ▼                                                  ▼
+[ Streaming Anomaly & Threat Engine ]             [ Streaming Rules & ML Detectors ]
+  ├─ Machine Learning Baseline Behavioral Models    ├─ Threat Intelligence (Google Mandiant & VirusTotal)
+  ├─ External Threat Intel Feeds (Proofpoint, CrowdStrike) ├─ Container Threat Detection (Kernel tracing)
+  └─ Automated Malware Scanning on EBS Volumes      └─ Virtual Machine Threat Detection (Hypervisor memory)
+        │                                                  │
+        ▼                                                  ▼
+[ GuardDuty Security Findings ]                   [ SCC Security Findings ]
+==================================================================================================</div>
+
+    <div class="grid-2">
+      <div class="cloud-box aws">
+        <h3>Amazon GuardDuty Internals <span class="badge badge-aws">AWS</span></h3>
+        <ul>
+          <li><strong>Agentless Ingestion:</strong> Ingests AWS CloudTrail, VPC Flow Logs, and Route 53 DNS logs directly from the AWS hypervisor and network fabric without requiring customer log exports or impacting workload throughput.</li>
+          <li><strong>Extended Detection Engines:</strong>
+            <ul>
+              <li><strong>EKS Protection:</strong> Evaluates Kubernetes API audit logs and deploys an optional eBPF runtime security agent to detect process and network anomalies inside pods.</li>
+              <li><strong>RDS Protection:</strong> Profiles Aurora database access patterns to detect anomalous logins and brute-force attempts.</li>
+              <li><strong>Lambda Protection:</strong> Monitors serverless invocation telemetry for cryptomining and unauthorized outbound calls.</li>
+              <li><strong>Malware Protection:</strong> Automatically creates an EBS snapshot and performs agentless malware scanning when suspicious activity is flagged on an EC2 instance.</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <div class="cloud-box gcp">
+        <h3>Google Cloud SCC Threat Detection Portfolio <span class="badge badge-gcp">GCP</span></h3>
+        <ul>
+          <li><strong>Event Threat Detection (ETD):</strong> Analyzes organization-wide Cloud Logging streams in real time. Detects brute-force SSH, IAM privilege escalation, cryptomining, malware C2 communication, and anomalous data exfiltration.</li>
+          <li><strong>Virtual Machine Threat Detection (VMTD):</strong>
+            <ul>
+              <li><strong>Hypervisor-Level Agentless Memory Scanning:</strong> Operates at Google's hypervisor layer. Inspects the active volatile memory of running Compute Engine VMs without installing in-guest agents or stealing CPU cycles.</li>
+              <li>Detects kernel-level rootkits, running cryptominers, and memory-only malware invisibly to the compromised guest OS.</li>
+            </ul>
+          </li>
+          <li><strong>Container Threat Detection (CTD):</strong> Traces kernel syscalls inside GKE worker nodes to detect reverse shells, unauthorized binaries, and compromised container escapes.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 6 -->
+  <section id="siem-soar">
+    <h2 class="section-title">6. Security Operations, SIEM & SOAR</h2>
+    <p>Consolidating multi-cloud telemetry into scalable analytical lakes to conduct retrospective investigations and trigger automated containment workflows.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Architecture Layer</th>
+          <th>AWS Security Operations Ecosystem</th>
+          <th>Google Security Operations (Chronicle SIEM & SOAR)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Core Data Lake Architecture</strong></td>
+          <td><strong>Amazon Security Lake:</strong> Normalizes multi-account logs into the <strong>Open Cybersecurity Schema Framework (OCSF)</strong>. Stores data in customer S3 buckets in Parquet format, queryable via Athena.</td>
+          <td><strong>Chronicle SIEM:</strong> Multi-tenant SaaS built on Google's core search infrastructure. Ingests petabytes of security telemetry into a unified data model (UDM) with 1-year default retention.</td>
+        </tr>
+        <tr>
+          <td><strong>Threat Intelligence Integration</strong></td>
+          <td>AWS Threat Intelligence feeds combined with integrated third-party partners.</td>
+          <td>Deeply integrated with <strong>Google Threat Intelligence</strong> (powered by <strong>Mandiant</strong> frontline incident response and <strong>VirusTotal</strong> malware graph).</td>
+        </tr>
+        <tr>
+          <td><strong>Investigation & Graph Analysis</strong></td>
+          <td><strong>Amazon Detective:</strong> Automatically extracts graph relationships from CloudTrail, VPC Flow, and GuardDuty findings, visualizing root causes and IP communication trees.</td>
+          <td>Chronicle Interactive Visual Graph & UDM Search: Sub-second search across billions of security events over 365 days; retrospective IoC matching.</td>
+        </tr>
+        <tr>
+          <td><strong>SOAR & Automated Orchestration</strong></td>
+          <td>Decentralized SOAR via AWS Step Functions, EventBridge rules, and Lambda automation scripts.</td>
+          <td><strong>Chronicle SOAR (formerly Siemplify):</strong> Full-featured native SOAR engine with visual playbook builders, case management, and crisis communication coordination.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- SECTION 7 -->
+  <section id="cspm-cwpp">
+    <h2 class="section-title">7. Posture Management & Workload Protection (CSPM & CWPP)</h2>
+
+    <div class="grid-2">
+      <div class="cloud-box aws">
+        <h3>AWS Security Hub & Amazon Inspector <span class="badge badge-aws">AWS</span></h3>
+        <ul>
+          <li><strong>AWS Security Hub (CSPM):</strong>
+            <ul>
+              <li>Central aggregation pane for findings from GuardDuty, Inspector, Macie, IAM Access Analyzer, and AWS Config.</li>
+              <li>Runs automated continuous compliance checks mapped against industry benchmarks: <strong>CIS AWS Foundations Benchmark</strong>, <strong>PCI-DSS</strong>, and <strong>NIST SP 800-53</strong>.</li>
+              <li>Calculates automated security posture scores across accounts.</li>
+            </ul>
+          </li>
+          <li><strong>Amazon Inspector (CWPP):</strong>
+            <ul>
+              <li>Continuous, automated vulnerability management for Amazon EC2 instances, AWS Lambda functions, and container images stored in Amazon ECR.</li>
+              <li>Agentless scanning for EC2 (via EBS snapshot analysis) or agent-based via AWS Systems Manager (SSM).</li>
+              <li>Evaluates CVEs, generates Common Vulnerability Scoring System (CVSS) scores contextualized with network reachability analysis.</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+
+      <div class="cloud-box gcp">
+        <h3>Google Cloud Security Command Center (SCC) <span class="badge badge-gcp">GCP</span></h3>
+        <ul>
+          <li><strong>SCC Posture Management (CSPM):</strong>
+            <ul>
+              <li>Central security console for the entire Google Cloud Organization.</li>
+              <li>Continuously monitors assets via Cloud Asset Inventory. Evaluates misconfigurations against CIS GCP Foundations, PCI-DSS, ISO 27001, and SOC 2.</li>
+              <li><strong>Attack Path Simulation:</strong> Maps potential lateral movement paths by combining IAM permissions, resource exposure, and network reachability to identify high-value asset risks.</li>
+            </ul>
+          </li>
+          <li><strong>SCC Workload Protection (CWPP):</strong>
+            <ul>
+              <li>Scans Compute Engine VMs for OS vulnerabilities and package risks.</li>
+              <li>Container vulnerability scanning integrated into <strong>Artifact Registry</strong> and Google Kubernetes Engine (GKE) runtime posture dashboards.</li>
+              <li><strong>Web Security Scanner:</strong> Crawls public App Engine, Compute Engine, and GKE web apps to identify XSS, Flash injection, and cleartext passwords.</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 8 -->
+  <section id="ddos-waf">
+    <h2 class="section-title">8. Edge Protection, WAF & Anti-DDoS Architecture</h2>
+    <p>Edge mitigation protects web applications and APIs from distributed volumetric floods (Layer 3/4) and sophisticated application attacks (Layer 7).</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Capability</th>
+          <th>AWS Shield & AWS WAF</th>
+          <th>Google Cloud Armor</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Layer 3/4 Anti-DDoS</strong></td>
+          <td><strong>AWS Shield Standard:</strong> Free, automatic mitigation of SYN/UDP floods at edge PoPs.<br><strong>AWS Shield Advanced:</strong> Financial cost spike protection, dedicated AWS DDoS Response Team (DRT) support, and advanced health-check routing.</td>
+          <td>Native multi-terabit infrastructure DDoS protection backed by Google's global network and Edge Front Ends (GFE). Standard tier included automatically with zero configuration.</td>
+        </tr>
+        <tr>
+          <td><strong>Layer 7 WAF Deployment</strong></td>
+          <td>Attached to Application Load Balancers (ALB), Amazon CloudFront, AWS API Gateway, and AWS AppSync.</td>
+          <td>Attached directly to Global External Application Load Balancers and Regional Load Balancers at the network edge.</td>
+        </tr>
+        <tr>
+          <td><strong>Managed Rule Sets</strong></td>
+          <td>AWS Managed Rules (Core Rule Set, SQLi, Known Bad Inputs), AWS Bot Control, and Commercial Rules via Marketplace (F5, Fortinet).</td>
+          <td>Preconfigured WAF rules based on OWASP Top 10, IP reputation lists, and Google threat intelligence feeds.</td>
+        </tr>
+        <tr>
+          <td><strong>Bot Management & Advanced Protection</strong></td>
+          <td>AWS WAF Bot Control with machine learning fingerprinting, challenge actions, and Fraud Control (Account Takeover / Account Creation Fraud).</td>
+          <td>Cloud Armor Bot Management integrated with <strong>reCAPTCHA Enterprise</strong> (frictionless risk scoring) and Adaptive Protection (ML-based Layer 7 anomaly detection).</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- SECTION 9 -->
+  <section id="confidential">
+    <h2 class="section-title">9. Hardware-Enforced Isolation & Confidential Computing</h2>
+    <p>Confidential computing protects data <em>in-use</em> (in memory) by cryptographically isolating workloads from the hypervisor, system operators, and cloud provider administrators.</p>
+
+    <div class="grid-2">
+      <div class="cloud-box aws">
+        <h3>AWS Nitro Enclaves & Confidential EC2 <span class="badge badge-aws">AWS</span></h3>
+        <ul>
+          <li><strong>AWS Nitro Enclaves:</strong>
+            <ul>
+              <li>Creates isolated, hardened execution environments alongside an EC2 instance.</li>
+              <li>An enclave has <strong>no persistent storage, no external network interface, and no interactive access</strong> (no SSH, no admin credentials).</li>
+              <li>Communicates strictly with the parent EC2 instance via a local virtual socket (<code>vsock</code>) channel.</li>
+              <li>Cryptographic Attestation: The Nitro Hypervisor generates signed attestation documents proving the enclave's code hash (PCRs) to AWS KMS before releasing decryption keys.</li>
+            </ul>
+          </li>
+          <li><strong>Confidential Computing with AMD SEV-SNP:</strong> Encrypts VM memory using hardware-generated keys managed by the AMD Secure Processor, shielding memory contents from the host hypervisor.</li>
+        </ul>
+      </div>
+
+      <div class="cloud-box gcp">
+        <h3>Google Cloud Confidential Computing Portfolio <span class="badge badge-gcp">GCP</span></h3>
+        <ul>
+          <li><strong>Confidential VMs:</strong>
+            <ul>
+              <li>Leverages AMD SEV (Secure Encrypted Virtualization) and SEV-SNP to encrypt all RAM using ephemeral hardware keys generated by the secure processor.</li>
+              <li>Zero code change required: Toggle a single checkbox on Compute Engine or GKE nodes. Memory encryption has negligible performance overhead (&lt; 2–4%).</li>
+            </ul>
+          </li>
+          <li><strong>Confidential Space:</strong>
+            <ul>
+              <li>Zero-trust multi-party data collaboration platform.</li>
+              <li>Allows multiple untrusted parties (e.g., healthcare institutions or banks) to pool sensitive data for model training or aggregation without any party (or Google) seeing the raw data.</li>
+              <li>Uses OpenID Connect (OIDC) cryptographic attestation tokens issued by the Google Cloud Attestation Service to release decryption keys strictly to authorized container workloads.</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 10 -->
+  <section id="matrix">
+    <h2 class="section-title">10. Master Capabilities, FIPS Compliance & Threat Coverage Matrix</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Capability / Certification</th>
+          <th>Amazon Web Services (AWS)</th>
+          <th>Google Cloud Platform (GCP)</th>
+          <th>Architectural Assessment</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>HSM FIPS Validation</strong></td>
+          <td>FIPS 140-2 Level 3 (Overall Level 2 for KMS; Level 3 for CloudHSM)</td>
+          <td>FIPS 140-2 Level 3 (Cloud HSM hardware modules)</td>
+          <td>Both meet stringent US Federal and banking cryptographic standards.</td>
+        </tr>
+        <tr>
+          <td><strong>External Key Control (BYOK/HYOK)</strong></td>
+          <td>AWS KMS External Key Store (XKS) via PKCS#11 / IPsec</td>
+          <td>Cloud EKM with Key Access Justifications (KAJ)</td>
+          <td>GCP KAJ is superior for digital sovereignty, requiring verified operational justifications before decryption.</td>
+        </tr>
+        <tr>
+          <td><strong>Agentless Memory Threat Detection</strong></td>
+          <td>Malware Protection scans detached EBS snapshots out-of-band</td>
+          <td>Virtual Machine Threat Detection (VMTD) scans active RAM from hypervisor</td>
+          <td>GCP detects active in-memory rootkits without disk persistence; AWS minimizes hypervisor inspection overhead.</td>
+        </tr>
+        <tr>
+          <td><strong>Kubernetes Threat Monitoring</strong></td>
+          <td>GuardDuty EKS Protection (Audit logs + eBPF agent)</td>
+          <td>Container Threat Detection (Audit logs + Kernel syscall tracing)</td>
+          <td>Both provide runtime container security without requiring heavy third-party agents.</td>
+        </tr>
+        <tr>
+          <td><strong>Data Sanitization / Transformation</strong></td>
+          <td>Macie flags sensitive data; custom Lambda required to redact</td>
+          <td>Sensitive Data Protection (Cloud DLP) includes native de-identification/FPE APIs</td>
+          <td>GCP provides end-to-end tokenization and masking directly within streaming ETL pipelines.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- SECTION 11 -->
+  <section id="scenarios">
+    <h2 class="section-title">11. Principal-Level Threat Modeling & Whiteboard Scenarios</h2>
+
+    <div class="callout">
+      <div class="callout-title">Scenario A: Zero-Trust Multi-Party Healthcare Data Collaboration</div>
+      <p><strong>Threat Model:</strong> Two competing pharmaceutical companies wish to run a joint ML cancer-detection model across their proprietary genomic datasets. Neither party can expose their raw genomic data to the other, nor can they trust cloud administrative staff with access to unencrypted data.</p>
+      <ul>
+        <li><strong>AWS Architecture:</strong>
+          <ul>
+            <li>Deploy workloads inside <strong>AWS Nitro Enclaves</strong> on AMD SEV-SNP compute instances.</li>
+            <li>Both parties upload encrypted datasets to an isolated S3 bucket encrypted with their respective AWS KMS CMKs.</li>
+            <li>The Nitro Enclave boots a mutually audited container image and generates a cryptographic attestation document.</li>
+            <li>Both parties configure KMS Key Policies to release decryption keys strictly if the attestation document matches the expected image measurement hashes (PCR0/PCR1/PCR2).</li>
+            <li>The model trains entirely within isolated enclave memory; results are written back to a shared bucket; raw data is destroyed upon enclave shutdown.</li>
+          </ul>
+        </li>
+        <li><strong>Google Cloud Architecture:</strong>
+          <ul>
+            <li>Deploy workloads using <strong>Confidential Space</strong> on Google Compute Engine.</li>
+            <li>Both parties store datasets in private Cloud Storage buckets encrypted using Cloud KMS CMEK.</li>
+            <li>The Confidential Space workload boots a certified container in an AMD SEV-SNP encrypted VM environment.</li>
+            <li>The container requests an attestation token from the Google Cloud Attestation Service, validating the boot state and image signature.</li>
+            <li>Cloud KMS evaluates the attestation claims via Workload Identity Federation and releases temporary decryption keys.</li>
+            <li>Neither party, nor Google system administrators, can inspect the physical RAM or intercept unencrypted genomic data.</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <div class="callout">
+      <div class="callout-title">Scenario B: Ransomware Containment & Incident Response Pipeline</div>
+      <p><strong>Threat Model:</strong> An attacker obtains compromised developer credentials, spins up unauthorized compute for cryptomining, and begins enumerating object storage buckets to exfiltrate and encrypt customer data.</p>
+      <ul>
+        <li><strong>AWS Response Workflow:</strong>
+          <ul>
+            <li><strong>Detection:</strong> <strong>Amazon GuardDuty</strong> triggers findings: <code>CryptoCurrency:EC2/BitcoinTool.B!DNS</code> and <code>Exfiltration:S3/AnomalousBehavior</code>.</li>
+            <li><strong>Ingestion & Triage:</strong> Findings stream into <strong>AWS Security Hub</strong> and <strong>Amazon EventBridge</strong>.</li>
+            <li><strong>Automated SOAR Action:</strong>
+              <ol>
+                <li>An EventBridge rule invokes an AWS Step Functions state machine.</li>
+                <li>Attaches an emergency IAM Deny Policy (<code>AWSRevokeOlderSessions</code>) to the compromised IAM credentials.</li>
+                <li>Changes the EC2 Security Group to an isolated quarantine group (no ingress/egress).</li>
+                <li>Invokes GuardDuty Malware Protection to trigger an automated snapshot of the attached EBS volumes for digital forensics.</li>
+                <li>Ingests findings into <strong>Amazon Detective</strong> to visualize lateral movement graphs.</li>
+              </ol>
+            </li>
+          </ul>
+        </li>
+        <li><strong>Google Cloud Response Workflow:</strong>
+          <ul>
+            <li><strong>Detection:</strong> <strong>SCC Event Threat Detection</strong> flags <code>Execution: Cryptomining</code> and <code>Exfiltration: Large Outbound Storage Copy</code>; <strong>VMTD</strong> flags malicious processes in RAM.</li>
+            <li><strong>Ingestion & Correlation:</strong> Telemetry streams in real time into <strong>Google Security Operations (Chronicle SIEM)</strong>, correlating historical DNS queries with Mandiant threat intel.</li>
+            <li><strong>Automated SOAR Action:</strong>
+              <ol>
+                <li><strong>Chronicle SOAR</strong> automatically triggers an incident response playbook.</li>
+                <li>Disables the compromised Service Account or revokes the OAuth session tokens via Cloud IAM APIs.</li>
+                <li>Applies a Hierarchical Firewall Rule or quarantine network tag to sever network connectivity to the affected VM.</li>
+                <li>Dynamically adds the target Cloud Storage bucket to a restricted <strong>VPC Service Controls (VPC-SC)</strong> perimeter, immediately dropping all unauthorized external API traffic.</li>
+              </ol>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <p>AWS vs. Google Cloud Security Architecture Reference • Generated for Enterprise Cloud Security Architects</p>
+</footer>
+
+</body>
+</html>
